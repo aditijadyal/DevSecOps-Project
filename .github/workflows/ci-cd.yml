@@ -1,0 +1,31 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Vagrant
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y vagrant
+    
+    - name: Provision VMs
+      run: vagrant up
+
+    - name: Run Lynis Audit on Web Server
+      run: vagrant ssh webserver -c "lynis audit system --quiet > /vagrant/lynis-web-audit.log"
+
+    - name: Run Lynis Audit on DB Server
+      run: vagrant ssh dbserver -c "lynis audit system --quiet > /vagrant/lynis-db-audit.log"
+
+    - name: Clean up VMs
+      run: vagrant destroy -f
